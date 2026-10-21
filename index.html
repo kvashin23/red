@@ -712,7 +712,7 @@
         <div class="feedback__error">Укажите ФИО</div>
       </div>
 
-      <div class="feedback__field feedback__field--wide feedback__sub" id="fb-rent" hidden>
+      <div class="feedback__field feedback__field--wide feedback__sub" id="fb-rent" data-theme="rent" hidden>
         <span class="feedback__label">Направление аренды <sup>*</sup></span>
         <div class="feedback__radios" role="radiogroup">
           <label class="feedback__radio">
@@ -725,6 +725,25 @@
           </label>
         </div>
         <div class="feedback__error">Выберите направление аренды</div>
+      </div>
+
+      <div class="feedback__field feedback__field--wide feedback__sub" id="fb-marketing" data-theme="marketing" hidden>
+        <span class="feedback__label">Направление <sup>*</sup></span>
+        <div class="feedback__radios" role="radiogroup">
+          <label class="feedback__radio">
+            <input type="radio" name="marketing_type" value="Реклама в комплексе" disabled>
+            <span>Реклама в комплексе</span>
+          </label>
+          <label class="feedback__radio">
+            <input type="radio" name="marketing_type" value="Организация мероприятий" disabled>
+            <span>Организация мероприятий</span>
+          </label>
+          <label class="feedback__radio">
+            <input type="radio" name="marketing_type" value="Реклама в соцсетях" disabled>
+            <span>Реклама в соцсетях</span>
+          </label>
+        </div>
+        <div class="feedback__error">Выберите направление</div>
       </div>
 
       <div class="feedback__field">
@@ -784,8 +803,8 @@
   if (!root) return;
   var form = root.querySelector('.feedback__form');
   var theme = form.querySelector('#fb-theme');
-  var rent = form.querySelector('#fb-rent');
-  var rentInputs = rent.querySelectorAll('input');
+  var subs = form.querySelectorAll('.feedback__sub[data-theme]');
+  var subInputs = form.querySelectorAll('.feedback__sub[data-theme] input');
   var phone = form.querySelector('#fb-phone');
   var fileInput = form.querySelector('#fb-files');
   var drop = form.querySelector('#fb-drop');
@@ -794,12 +813,14 @@
   var MAX_FILES = 5, MAX_SIZE = 10 * 1024 * 1024;
   var files = [];
 
-  // Тема «Аренда площадей» → обязательный выбор направления
+  // Темы «Аренда площадей» и «Маркетинг и реклама» → обязательный выбор направления
   theme.addEventListener('change', function () {
-    var isRent = theme.value === 'rent';
-    rent.hidden = !isRent;
-    rentInputs.forEach(function (i) { i.disabled = !isRent; i.required = isRent; if (!isRent) i.checked = false; });
-    rent.classList.remove('is-error');
+    subs.forEach(function (sub) {
+      var on = sub.dataset.theme === theme.value;
+      sub.hidden = !on;
+      sub.querySelectorAll('input').forEach(function (i) { i.disabled = !on; i.required = on; if (!on) i.checked = false; });
+      sub.classList.remove('is-error');
+    });
     validateField(theme);
   });
 
@@ -950,7 +971,7 @@
   form.querySelectorAll('[required]').forEach(function (el) {
     el.addEventListener(el.tagName === 'SELECT' || el.type === 'radio' || el.type === 'checkbox' ? 'change' : 'blur', function () { validateField(el); });
   });
-  rentInputs.forEach(function (el) { el.addEventListener('change', function () { validateField(el); }); });
+  subInputs.forEach(function (el) { el.addEventListener('change', function () { validateField(el); }); });
 
   form.addEventListener('submit', function (ev) {
     ev.preventDefault();
