@@ -1,0 +1,630 @@
+<!-- begin .feedback (форма обратной связи) -->
+<style>
+  .feedback {
+    margin-top: 16px;
+    padding: 50px 80px 60px;
+    background: #fff;
+    letter-spacing: .4px;
+  }
+  .feedback__heading {
+    margin: 0 0 32px;
+    font-size: 24px;
+    font-weight: 500;
+    color: #333;
+    letter-spacing: .6px;
+  }
+  .feedback__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px 24px;
+  }
+  .feedback__field { position: relative; min-width: 0; }
+  .feedback__field--wide { grid-column: 1 / -1; }
+  .feedback__field[hidden] { display: none; }
+  .feedback__label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+  }
+  .feedback__label sup { color: #c12127; font-size: 14px; top: 0; }
+  .feedback__control { position: relative; }
+  .feedback__icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    transform: translateY(-50%);
+    fill: #b5b5b5;
+    pointer-events: none;
+  }
+  .feedback__input,
+  .feedback__select,
+  .feedback__textarea {
+    display: block;
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    border: 1px solid rgba(34, 34, 34, .15);
+    border-radius: 4px;
+    background: #fff;
+    font: 400 15px/1.4 Roboto, sans-serif;
+    letter-spacing: .4px;
+    color: #333;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color .2s, box-shadow .2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .feedback__control--icon .feedback__input { padding-left: 44px; }
+  .feedback__input::placeholder,
+  .feedback__textarea::placeholder { color: #909090; font-weight: 300; }
+  .feedback__select {
+    padding-right: 44px;
+    cursor: pointer;
+    background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23909090' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 16px center;
+  }
+  /* выпадающий список (поверх скрытого нативного select) */
+  .feedback__native {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .feedback__dropdown { position: relative; }
+  .feedback__dropdown .feedback__select {
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: border-color .2s, box-shadow .2s, background-position .2s;
+  }
+  .feedback__dropdown .feedback__select.is-placeholder { color: #909090; font-weight: 300; }
+  .feedback__dropdown.is-open .feedback__select {
+    border-color: #c12127;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 7l5-5 5 5' fill='none' stroke='%23c12127' stroke-width='1.6'/%3E%3C/svg%3E");
+  }
+  .feedback__options {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 30;
+    margin: 0;
+    padding: 6px 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid rgba(34, 34, 34, .08);
+    border-radius: 4px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .14);
+    animation: feedbackIn .18s ease;
+  }
+  .feedback__options[hidden] { display: none; }
+  .feedback__option {
+    position: relative;
+    padding: 12px 40px 12px 18px;
+    font-size: 15px;
+    line-height: 1.35;
+    color: #333;
+    cursor: pointer;
+    transition: background-color .15s, color .15s;
+  }
+  .feedback__option::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #c12127;
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .feedback__option.is-active { background: #f5f5f5; }
+  .feedback__option[aria-selected="true"] { color: #c12127; font-weight: 500; }
+  .feedback__option[aria-selected="true"]::before { opacity: 1; }
+  .feedback__option[aria-selected="true"]::after {
+    content: "";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    width: 12px;
+    height: 7px;
+    margin-top: -6px;
+    border-left: 2px solid #c12127;
+    border-bottom: 2px solid #c12127;
+    transform: rotate(-45deg);
+  }
+  .feedback__textarea {
+    height: auto;
+    min-height: 96px;
+    padding: 13px 16px;
+    resize: vertical;
+  }
+  .feedback__input:hover, .feedback__select:hover, .feedback__textarea:hover { border-color: rgba(34, 34, 34, .35); }
+  .feedback__input:focus, .feedback__select:focus, .feedback__textarea:focus {
+    border-color: #c12127;
+    box-shadow: 0 0 0 3px rgba(193, 33, 39, .1);
+  }
+  .feedback__field.is-error .feedback__input,
+  .feedback__field.is-error .feedback__select,
+  .feedback__field.is-error .feedback__textarea { border-color: #c12127; }
+  .feedback__error {
+    display: none;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #c12127;
+  }
+  .feedback__field.is-error .feedback__error { display: block; }
+
+  /* подполе «Аренда / Аренда Мебельный центр» */
+  .feedback__radios { display: flex; flex-wrap: wrap; gap: 12px; }
+  .feedback__radio { position: relative; cursor: pointer; }
+  .feedback__radio input { position: absolute; opacity: 0; pointer-events: none; }
+  .feedback__radio span {
+    display: inline-flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 20px 0 44px;
+    border: 1px solid rgba(34, 34, 34, .15);
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+    position: relative;
+    transition: border-color .2s, background-color .2s;
+  }
+  .feedback__radio span::before {
+    content: "";
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    margin-top: -9px;
+    border: 1px solid rgba(34, 34, 34, .35);
+    border-radius: 50%;
+    background: #fff;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .feedback__radio:hover span { border-color: rgba(34, 34, 34, .35); }
+  .feedback__radio input:checked + span { border-color: #c12127; background: rgba(193, 33, 39, .04); }
+  .feedback__radio input:checked + span::before { border-color: #c12127; box-shadow: inset 0 0 0 4px #fff; background: #c12127; }
+  .feedback__radio input:focus-visible + span { box-shadow: 0 0 0 3px rgba(193, 33, 39, .15); }
+  .feedback__field.is-error .feedback__radio span { border-color: #c12127; }
+  .feedback__sub {
+    padding: 18px 20px;
+    border-left: 3px solid #c12127;
+    background: #f7f7f7;
+    animation: feedbackIn .25s ease;
+  }
+  @keyframes feedbackIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+  /* загрузка файлов */
+  .feedback__drop {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 110px;
+    padding: 24px;
+    border: 1px dashed rgba(34, 34, 34, .25);
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    color: #707070;
+    cursor: pointer;
+    transition: border-color .2s, background-color .2s;
+  }
+  .feedback__drop:hover, .feedback__drop.is-over { border-color: #c12127; background: rgba(193, 33, 39, .03); }
+  .feedback__drop svg { width: 26px; height: 26px; fill: #555; }
+  .feedback__drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .feedback__drop small { font-size: 12px; color: #a0a0a0; }
+  .feedback__files { margin: 10px 0 0; padding: 0; list-style: none; }
+  .feedback__files li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+    margin-top: 6px;
+    background: #f7f7f7;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #333;
+  }
+  .feedback__files span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .feedback__files em { font-style: normal; color: #909090; margin-left: 6px; }
+  .feedback__files button {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: 20px;
+    line-height: 1;
+    color: #909090;
+    cursor: pointer;
+  }
+  .feedback__files button:hover { color: #c12127; }
+
+  .feedback__agree {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: #707070;
+    cursor: pointer;
+  }
+  .feedback__agree input { flex: none; width: 16px; height: 16px; margin: 1px 0 0; accent-color: #c12127; }
+  .feedback__agree a { color: #333; text-decoration: underline; }
+  .feedback__agree a:hover { color: #c12127; }
+
+  .feedback__footer { display: flex; justify-content: center; margin-top: 8px; }
+  .feedback__submit {
+    min-width: 260px;
+    height: 48px;
+    padding: 0 40px;
+    border: 0;
+    border-radius: 4px;
+    background: #c12127;
+    font: 700 13px Roboto, sans-serif;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+    color: #fff;
+    cursor: pointer;
+    transition: background-color .2s;
+  }
+  .feedback__submit:hover { background: #a51b20; }
+  .feedback__submit:disabled { opacity: .6; cursor: default; }
+
+  .feedback__success {
+    padding: 40px 0 20px;
+    text-align: center;
+    font-size: 16px;
+    color: #333;
+  }
+  .feedback__success b { display: block; margin-bottom: 8px; font-size: 22px; font-weight: 500; }
+
+  @media (max-width: 1024px) {
+    .feedback { padding: 40px; }
+  }
+  @media (max-width: 640px) {
+    .feedback { padding: 30px 16px; }
+    .feedback__heading { font-size: 20px; margin-bottom: 24px; }
+    .feedback__grid { grid-template-columns: 1fr; gap: 18px; }
+    .feedback__radios { flex-direction: column; }
+    .feedback__radio span { width: 100%; box-sizing: border-box; }
+    .feedback__submit { width: 100%; min-width: 0; }
+  }
+</style>
+
+<section class="feedback" id="feedback">
+  <h2 class="feedback__heading">Обратная связь</h2>
+
+  <form class="feedback__form" method="post" action="/inc/ajax/feedback.php" enctype="multipart/form-data" novalidate>
+    <div class="feedback__grid">
+
+      <div class="feedback__field">
+        <label class="feedback__label" id="fb-theme-label" for="fb-theme-btn">Тема <sup>*</sup></label>
+        <div class="feedback__control feedback__dropdown" id="fb-theme-dd">
+          <button class="feedback__select is-placeholder" id="fb-theme-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="fb-theme-label fb-theme-btn">Выберите тему</button>
+          <ul class="feedback__options" role="listbox" aria-labelledby="fb-theme-label" tabindex="-1" hidden></ul>
+          <select class="feedback__native" id="fb-theme" name="theme" required tabindex="-1" aria-hidden="true">
+            <option value="" disabled selected>Выберите тему</option>
+            <option value="rent">Аренда площадей (Аренда и Мебельный центр)</option>
+            <option value="marketing">Маркетинг и реклама</option>
+            <option value="lost">Забытые вещи</option>
+            <option value="feedback">Обратная связь</option>
+            <option value="partnership">Предложение о сотрудничестве</option>
+          </select>
+        </div>
+        <div class="feedback__error">Выберите тему обращения</div>
+      </div>
+
+      <div class="feedback__field">
+        <label class="feedback__label" for="fb-name">ФИО <sup>*</sup></label>
+        <div class="feedback__control feedback__control--icon">
+          <svg class="feedback__icon" viewBox="0 0 24 24"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zm0 2c-3.3 0-9 1.7-9 5v2h18v-2c0-3.3-5.7-5-9-5z"/></svg>
+          <input class="feedback__input" id="fb-name" type="text" name="name" placeholder="ФИО" autocomplete="name" required>
+        </div>
+        <div class="feedback__error">Укажите ФИО</div>
+      </div>
+
+      <div class="feedback__field feedback__field--wide feedback__sub" id="fb-rent" data-theme="rent" hidden>
+        <span class="feedback__label">Направление аренды <sup>*</sup></span>
+        <div class="feedback__radios" role="radiogroup">
+          <label class="feedback__radio">
+            <input type="radio" name="rent_type" value="Аренда" disabled>
+            <span>Аренда</span>
+          </label>
+          <label class="feedback__radio">
+            <input type="radio" name="rent_type" value="Аренда Мебельный центр" disabled>
+            <span>Аренда Мебельный центр</span>
+          </label>
+        </div>
+        <div class="feedback__error">Выберите направление аренды</div>
+      </div>
+
+      <div class="feedback__field feedback__field--wide feedback__sub" id="fb-marketing" data-theme="marketing" hidden>
+        <span class="feedback__label">Направление <sup>*</sup></span>
+        <div class="feedback__radios" role="radiogroup">
+          <label class="feedback__radio">
+            <input type="radio" name="marketing_type" value="Реклама в комплексе" disabled>
+            <span>Реклама в комплексе</span>
+          </label>
+          <label class="feedback__radio">
+            <input type="radio" name="marketing_type" value="Организация мероприятий" disabled>
+            <span>Организация мероприятий</span>
+          </label>
+          <label class="feedback__radio">
+            <input type="radio" name="marketing_type" value="Реклама в соцсетях" disabled>
+            <span>Реклама в соцсетях</span>
+          </label>
+        </div>
+        <div class="feedback__error">Выберите направление</div>
+      </div>
+
+      <div class="feedback__field">
+        <label class="feedback__label" for="fb-email">E-mail <sup>*</sup></label>
+        <div class="feedback__control feedback__control--icon">
+          <svg class="feedback__icon" viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>
+          <input class="feedback__input" id="fb-email" type="email" name="email" placeholder="E-mail" autocomplete="email" required>
+        </div>
+        <div class="feedback__error">Укажите корректный e-mail</div>
+      </div>
+
+      <div class="feedback__field">
+        <label class="feedback__label" for="fb-phone">Телефон <sup>*</sup></label>
+        <div class="feedback__control feedback__control--icon">
+          <svg class="feedback__icon" viewBox="0 0 24 24"><path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"/></svg>
+          <input class="feedback__input" id="fb-phone" type="tel" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" required>
+        </div>
+        <div class="feedback__error">Укажите номер телефона полностью</div>
+      </div>
+
+      <div class="feedback__field feedback__field--wide">
+        <label class="feedback__label" for="fb-message">Сообщение <sup>*</sup></label>
+        <textarea class="feedback__textarea" id="fb-message" name="message" rows="4" placeholder="Сообщение" required></textarea>
+        <div class="feedback__error">Напишите сообщение</div>
+      </div>
+
+      <div class="feedback__field feedback__field--wide">
+        <label class="feedback__drop" id="fb-drop">
+          <svg viewBox="0 0 24 24"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4a7.5 7.5 0 0 0-6.65 4.04A6 6 0 0 0 6 20h13a5 5 0 0 0 .35-9.96zM19 18H6a4 4 0 0 1-.44-7.98l1.07-.11.5-.95A5.46 5.46 0 0 1 12 6a5.5 5.5 0 0 1 5.39 4.43l.3 1.5 1.53.11A3 3 0 0 1 19 18zM8 13h2.55v3h2.9v-3H16l-4-4-4 4z"/></svg>
+          Перетащите или нажмите для добавления файлов
+          <small>До 5 файлов, не более 10 МБ каждый: jpg, png, pdf, doc, docx, xls, xlsx</small>
+          <input type="file" id="fb-files" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx">
+        </label>
+        <ul class="feedback__files" id="fb-file-list"></ul>
+        <div class="feedback__error" id="fb-file-error"></div>
+      </div>
+
+      <div class="feedback__field feedback__field--wide">
+        <label class="feedback__agree">
+          <input type="checkbox" name="agree" required>
+          <span>Я даю согласие на <a href="/personal/" target="_blank">обработку персональных данных</a></span>
+        </label>
+        <div class="feedback__error">Необходимо согласие на обработку данных</div>
+      </div>
+
+    </div>
+
+    <div class="feedback__footer">
+      <button class="feedback__submit" type="submit">Отправить сообщение</button>
+    </div>
+  </form>
+</section>
+
+<script>
+(function () {
+  var root = document.getElementById('feedback');
+  if (!root) return;
+  var form = root.querySelector('.feedback__form');
+  var theme = form.querySelector('#fb-theme');
+  var subs = form.querySelectorAll('.feedback__sub[data-theme]');
+  var subInputs = form.querySelectorAll('.feedback__sub[data-theme] input');
+  var phone = form.querySelector('#fb-phone');
+  var fileInput = form.querySelector('#fb-files');
+  var drop = form.querySelector('#fb-drop');
+  var list = form.querySelector('#fb-file-list');
+  var fileError = form.querySelector('#fb-file-error');
+  var MAX_FILES = 5, MAX_SIZE = 10 * 1024 * 1024;
+  var files = [];
+
+  // Темы «Аренда площадей» и «Маркетинг и реклама» → обязательный выбор направления
+  theme.addEventListener('change', function () {
+    subs.forEach(function (sub) {
+      var on = sub.dataset.theme === theme.value;
+      sub.hidden = !on;
+      sub.querySelectorAll('input').forEach(function (i) { i.disabled = !on; i.required = on; if (!on) i.checked = false; });
+      sub.classList.remove('is-error');
+    });
+    validateField(theme);
+  });
+
+  // Выпадающий список «Тема»: свой интерфейс, значение хранится в нативном select
+  var dd = form.querySelector('#fb-theme-dd');
+  var ddBtn = dd.querySelector('.feedback__select');
+  var ddList = dd.querySelector('.feedback__options');
+  var ddItems = [];
+  var ddActive = -1;
+  Array.prototype.forEach.call(theme.options, function (opt) {
+    if (opt.disabled) return;
+    var li = document.createElement('li');
+    li.className = 'feedback__option';
+    li.id = 'fb-theme-opt-' + opt.value;
+    li.setAttribute('role', 'option');
+    li.setAttribute('aria-selected', 'false');
+    li.dataset.value = opt.value;
+    li.textContent = opt.textContent;
+    li.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    li.addEventListener('click', function () { ddSelect(ddItems.indexOf(li)); });
+    li.addEventListener('mousemove', function () { ddHighlight(ddItems.indexOf(li)); });
+    ddList.appendChild(li);
+    ddItems.push(li);
+  });
+  function ddHighlight(i) {
+    ddItems.forEach(function (li, n) { li.classList.toggle('is-active', n === i); });
+    ddActive = i;
+    if (i > -1) {
+      ddBtn.setAttribute('aria-activedescendant', ddItems[i].id);
+      ddItems[i].scrollIntoView({ block: 'nearest' });
+    }
+  }
+  function ddOpen() {
+    ddList.hidden = false;
+    dd.classList.add('is-open');
+    ddBtn.setAttribute('aria-expanded', 'true');
+    ddHighlight(Math.max(0, ddItems.findIndex(function (li) { return li.dataset.value === theme.value; })));
+  }
+  function ddClose() {
+    ddList.hidden = true;
+    dd.classList.remove('is-open');
+    ddBtn.setAttribute('aria-expanded', 'false');
+    ddBtn.removeAttribute('aria-activedescendant');
+  }
+  function ddSelect(i) {
+    var li = ddItems[i];
+    ddItems.forEach(function (x) { x.setAttribute('aria-selected', String(x === li)); });
+    ddBtn.textContent = li.textContent;
+    ddBtn.classList.remove('is-placeholder');
+    ddClose();
+    ddBtn.focus();
+    if (theme.value !== li.dataset.value) {
+      theme.value = li.dataset.value;
+      theme.dispatchEvent(new Event('change'));
+    }
+  }
+  ddBtn.addEventListener('click', function () { ddList.hidden ? ddOpen() : ddClose(); });
+  ddBtn.addEventListener('blur', function () { ddClose(); });
+  ddBtn.addEventListener('keydown', function (e) {
+    var open = !ddList.hidden;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!open) return ddOpen();
+      var step = e.key === 'ArrowDown' ? 1 : -1;
+      ddHighlight((ddActive + step + ddItems.length) % ddItems.length);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      open && ddActive > -1 ? ddSelect(ddActive) : ddOpen();
+    } else if (e.key === 'Escape' && open) {
+      e.preventDefault();
+      ddClose();
+    } else if (e.key === 'Tab' && open) {
+      ddClose();
+    }
+  });
+
+  // Маска телефона +7 (XXX) XXX-XX-XX
+  function formatPhone(v) {
+    var d = v.replace(/\D/g, '');
+    if (d[0] === '8' || d[0] === '7') d = d.slice(1);
+    d = d.slice(0, 10);
+    var r = '+7';
+    if (d.length) r += ' (' + d.slice(0, 3);
+    if (d.length >= 3) r += ')';
+    if (d.length > 3) r += ' ' + d.slice(3, 6);
+    if (d.length > 6) r += '-' + d.slice(6, 8);
+    if (d.length > 8) r += '-' + d.slice(8, 10);
+    return r;
+  }
+  phone.addEventListener('focus', function () { if (!phone.value) phone.value = '+7'; });
+  phone.addEventListener('blur', function () { if (phone.value === '+7') phone.value = ''; });
+  phone.addEventListener('input', function () { phone.value = formatPhone(phone.value); });
+
+  // Файлы
+  function sizeLabel(b) { return b > 1048576 ? (b / 1048576).toFixed(1) + ' МБ' : Math.ceil(b / 1024) + ' КБ'; }
+  function renderFiles() {
+    list.innerHTML = '';
+    files.forEach(function (f, i) {
+      var li = document.createElement('li');
+      var name = document.createElement('span');
+      name.textContent = f.name;
+      var size = document.createElement('em');
+      size.textContent = sizeLabel(f.size);
+      name.appendChild(size);
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.setAttribute('aria-label', 'Удалить файл');
+      del.innerHTML = '&times;';
+      del.addEventListener('click', function () { files.splice(i, 1); renderFiles(); });
+      li.appendChild(name);
+      li.appendChild(del);
+      list.appendChild(li);
+    });
+  }
+  function addFiles(fl) {
+    var errors = [];
+    Array.prototype.forEach.call(fl, function (f) {
+      if (files.length >= MAX_FILES) { errors.push('Можно прикрепить не более ' + MAX_FILES + ' файлов'); return; }
+      if (f.size > MAX_SIZE) { errors.push('Файл «' + f.name + '» больше 10 МБ'); return; }
+      files.push(f);
+    });
+    fileError.textContent = errors.filter(function (e, i, a) { return a.indexOf(e) === i; }).join('. ');
+    fileError.parentElement.classList.toggle('is-error', errors.length > 0);
+    renderFiles();
+  }
+  fileInput.addEventListener('change', function () { addFiles(fileInput.files); fileInput.value = ''; });
+  ['dragenter', 'dragover'].forEach(function (e) {
+    drop.addEventListener(e, function (ev) { ev.preventDefault(); drop.classList.add('is-over'); });
+  });
+  ['dragleave', 'drop'].forEach(function (e) {
+    drop.addEventListener(e, function (ev) { ev.preventDefault(); drop.classList.remove('is-over'); });
+  });
+  drop.addEventListener('drop', function (ev) { addFiles(ev.dataTransfer.files); });
+
+  // Валидация
+  function isValid(el) {
+    if (el.type === 'radio') return !el.required || !!form.querySelector('input[name="' + el.name + '"]:checked');
+    if (el.type === 'checkbox') return !el.required || el.checked;
+    if (el === phone) return phone.value.replace(/\D/g, '').length === 11;
+    if (el.type === 'email') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(el.value.trim());
+    return !el.required || el.value.trim() !== '';
+  }
+  function validateField(el) {
+    var ok = isValid(el);
+    el.closest('.feedback__field').classList.toggle('is-error', !ok);
+    return ok;
+  }
+  form.querySelectorAll('[required]').forEach(function (el) {
+    el.addEventListener(el.tagName === 'SELECT' || el.type === 'radio' || el.type === 'checkbox' ? 'change' : 'blur', function () { validateField(el); });
+  });
+  subInputs.forEach(function (el) { el.addEventListener('change', function () { validateField(el); }); });
+
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var firstBad = null;
+    form.querySelectorAll('[required]:not(:disabled)').forEach(function (el) {
+      if (!validateField(el) && !firstBad) firstBad = el;
+    });
+    if (firstBad) { (firstBad === theme ? ddBtn : firstBad).focus(); return; }
+
+    var data = new FormData(form);
+    files.forEach(function (f) { data.append('files[]', f); });
+    var btn = form.querySelector('.feedback__submit');
+    btn.disabled = true;
+    btn.textContent = 'Отправка…';
+
+    fetch(form.action, { method: 'POST', body: data })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); })
+      .then(showSuccess)
+      .catch(function () {
+        btn.disabled = false;
+        btn.textContent = 'Отправить сообщение';
+        alert('Не удалось отправить сообщение. Попробуйте позже или позвоните нам.');
+      });
+  });
+
+  function showSuccess() {
+    form.outerHTML = '<div class="feedback__success"><b>Спасибо! Сообщение отправлено.</b>Мы свяжемся с вами в ближайшее время.</div>';
+  }
+})();
+</script>
+<!-- end .feedback -->
